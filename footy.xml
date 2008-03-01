@@ -1,7 +1,0 @@
-<?xml version="1.0" encoding="iso-8859-1"?>
-<rss version="2.0"><channel><title>Football at the George &amp; Dragon</title><link>http://www.oreilly.com/catalog/new.html</link><description>Keep track of O'Reilly books as they're announced</description><managingEditor>leonardr@segfault.org (Leonard Richardson)</managingEditor><lastBuildDate>Fri, 29 Feb 2008 14:46:47 GMT</lastBuildDate><generator>PyRSS2Gen-1.0.0</generator><docs>http://blogs.law.harvard.edu/tech/rss</docs><item><title>Error scraping this feed</title><link>http://www.oreilly.com/catalog/new.html#1204325208.61</link><description>&lt;p&gt;Unable to finish scraping this webpage into a feed. Please get the person in charge of maintaining the scraped feed (&lt;i&gt;not&lt;/i&gt; the person in charge of the original website) to fix this.&lt;/p&gt; &lt;p&gt;Stack trace:&lt;/p&gt; &lt;pre&gt;  File "/home/.harvard/bsharon/footyrss/ScrapeNFeed.py", line 84, in refresh
-    self.HTML2RSS(headers, body)
-
-  File "test.py", line 13, in HTML2RSS
-    for row in table('tr'):
-'NoneType' object is not callable&lt;/pre&gt;</description><guid isPermaLink="true">http://www.oreilly.com/catalog/new.html#1204325208.61</guid><pubDate>Fri, 29 Feb 2008 14:46:47 GMT</pubDate></item></channel></rss>
