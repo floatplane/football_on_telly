@@ -1,37 +1,23 @@
 #!/usr/bin/env python
 import re
+import sys
+import os
+import urllib
 from BeautifulSoup import BeautifulSoup
 from PyRSS2Gen import RSSItem, Guid
 import ScrapeNFeed
+from datetime import datetime, timedelta
 
-class FootyFeed(ScrapeNFeed.ScrapedFeed):    
-
-    def HTML2RSS(self, headers, body):
-        soup = BeautifulSoup.BeautifulSoup(body)
-
-        table = soup.find(bgcolor="#000099")
-        items = []
-        for row in table.findAll('tr'):
-
-            print row
-#             link = self.baseURL + item.a['href']
-#             if not self.hasSeen(link):
-#                 bookTitle = item.a.string
-#                 releaseDate = item.em.string
-#                 items.append(RSSItem(title=bookTitle,
-#                                      description=releaseDate,
-#                                      link=link))
-#         self.addRSSItems(items)
-
-# FootyFeed.load("Football at the George & Dragon",
-#                  'http://www.oreilly.com/catalog/new.html',
-#                  "Keep track of O'Reilly books as they're announced",
-#                  'footy.xml', 
-# 		  'footy.pickle',
-#                  managingEditor='leonardr@segfault.org (Leonard Richardson)')
+sys.path += [os.path.join(os.path.dirname(__file__), 'icalendar')]
+from icalendar import Calendar, Event
 
 whitespace = re.compile("[\s]+|&nbsp;")
 
+#
+# Routine to pull out the text from a cell of the listing table,
+# which can in turn have all kinds of crazy nested tags generated
+# through the magic of FrontPage, or Word, or whatever it is.
+#
 def ExtractTableCellText(cell):
     while hasattr(cell, 'contents') and len(cell) > 0:
         cell = cell.contents[0]
@@ -45,32 +31,140 @@ def ExtractTableCellText(cell):
 
     return txt
 
-soup = BeautifulSoup(open('football.html').read())
-#                     , convertEntities=BeautifulSoup.ALL_ENTITIES)
-table = soup.find(bgcolor="#000099")
+timeRe = re.compile("(?P<live>live)*\s*(?P<hour>\d{1,2})([:](?P<minute>\d{1,2}))*.*(?P<ampm>am|pm)", re.IGNORECASE)
 
-# pull out all linebreaks
-[br.extract() for br in table.findAll('br')]
+# Given a string like "LIVE 11AM" returns a tuple of (hour, minute,
+# ampm, live) where hour and minute are ints, ampm is a string, and
+# live is a bool
+#
+def CrackTime(time):
+    re_match = timeRe.match(time)
 
-lastDate = ""
+    if re_match == None:
+        raise ValueError
 
-for row in table.findAll('tr')[1:]:
+    timeDict = re_match.groupdict()
 
-    date, misc, match, times = [ExtractTableCellText(cell) for cell in row.findAll('td')]
-
-    times = times.split("&amp;")
-
-    if len(date) == 0:
-        date = lastDate
+    # get values that are optional
+    if timeDict["minute"] == None:
+        minute = 0;
     else:
-        lastDate = date
+        minute = int(timeDict["minute"])
 
-    for time in times:
-        print """-------------------------------------------
-        date %s
-        misc %s
-        match %s
-        time %s""" % (date, misc, match, time)
+    live = (timeDict["live"] != None)
 
+    return (int(timeDict["hour"]), minute, timeDict["ampm"], live)
+
+# Given a string like "MON MAR 3", return a tuple of (year, month, day)
+def CrackDate(date):
+    day, monthStr, date = date.split()
+    monthStr = monthStr.lower()
+    date = int(date)
+
+    now = datetime.now()
+
+    month = 1
+    for m in ["jan", "feb", "mar", "apr", "may", "jun", "jul", "aug", "sep", "oct", "nov", "dec"]:
+        if monthStr.startswith(m):
+            break
+        month += 1;
+
+    year = now.year
+    if (month < now.month):
+        year += 1
+
+    return (year, month, date)
     
-    
+
+
+#
+# Build a list of matches that we find in the list
+#
+def BuildMatchList(soup):
+
+    # Find the magic table with the crazy-ass background color
+    table = soup.find(bgcolor="#000099")
+
+    # pull out all linebreaks, save ourselves headache later
+    [br.extract() for br in table.findAll('br')]
+
+    lastDate = ()
+
+    result = []
+
+
+    # loop over all rows, but skip the first; that's the header row
+    for row in table.findAll('tr')[1:]:
+
+        date, misc, match, times = [ExtractTableCellText(cell) for cell in row.findAll('td')]
+
+        times = times.split("&amp;")
+
+        if len(date) == 0:
+            date_tuple = lastDate
+        else:
+            try:
+                date_tuple = CrackDate(date)
+            except ValueError:
+                # doesn't have a valid date, is probably another
+                # header row, like the Euro 2008 section
+                continue
+
+            lastDate = date_tuple
+
+        for t in times:
+
+            try:
+                hour, minute, ampm, live = CrackTime(t)
+            except ValueError:
+                continue
+
+            # Get our final date and time...
+            dtime = datetime.strptime("%d %d %d %d:%d %s" % (date_tuple[0], date_tuple[1], date_tuple[2],
+                                                             hour, minute, ampm.upper()),
+                                      "%Y %m %d %I:%M %p")
+            
+
+            result.append( { "date" : dtime.ctime(),
+                             "datetime" : dtime,
+                             "misc" : misc,
+                             "match" : match,
+                             "time" : t,
+                             "hour" : hour,
+                             "minute" : minute,
+                             "ampm" : ampm,
+                             "live" : live} )
+
+    return result
+
+matchList = BuildMatchList(BeautifulSoup(urllib.urlopen('http://www.georgeanddragonpub.com/football.html').read()))
+
+cal = Calendar()
+cal.add('prodid', '-//Football watching at the George &amp; Dragon//floatplane.us//')
+cal.add('version', '2.0')
+
+for match in matchList:
+
+    live = ""
+    if match["live"]:
+        live = "(LIVE!)"
+        
+#     print """-------------------------------------------
+#     date %s
+#     misc %s
+#     match %s %s
+#     time %d:%02d %s""" % ( match["date"], match["misc"], match["match"], live,
+#                             match["hour"], match["minute"], match["ampm"])
+
+#     print match
+
+    event = Event()
+    event.add('summary', "%s %s" % (match["match"], live))
+    event.add('dtstart', match["datetime"])
+    event.add('dtend', match["datetime"] + timedelta(hours=2))
+
+    cal.add_component(event)
+
+f = open("footy.ics", "wb")
+f.write(cal.as_string())
+f.close()
