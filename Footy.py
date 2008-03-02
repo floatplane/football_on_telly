@@ -120,10 +120,12 @@ def BuildMatchList(soup):
                 continue
 
             # Get our final date and time...
-            dtime = datetime.strptime("%d %d %d %d:%d %s" % (date_tuple[0], date_tuple[1], date_tuple[2],
-                                                             hour, minute, ampm.upper()),
-                                      "%Y %m %d %I:%M %p")
-            
+            hour24 = hour
+            if ampm.lower() == "pm":
+                hour24 += 12
+                
+            dtime = datetime(year=date_tuple[0], month=date_tuple[1],
+                             day=date_tuple[2], hour=hour24, minute=minute)            
 
             result.append( { "date" : dtime.ctime(),
                              "datetime" : dtime,
