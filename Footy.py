@@ -165,6 +165,7 @@ for match in matchList:
 
     cal.add_component(event)
 
-f = open("footy.ics", "wb")
-f.write(cal.as_string())
-f.close()
+if len(sys.argv) > 1:
+    f = open(sys.argv[1], "wb")
+    f.write(cal.as_string())
+    f.close()
