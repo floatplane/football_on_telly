@@ -142,8 +142,12 @@ def BuildMatchList(soup):
 matchList = BuildMatchList(BeautifulSoup(urllib.urlopen('http://www.georgeanddragonpub.com/football.html').read()))
 
 cal = Calendar()
-cal.add('prodid', '-//Football watching at the George &amp; Dragon//floatplane.us//')
+cal.add('prodid', '-//calendar parsing//floatplane.us//')
 cal.add('version', '2.0')
+cal.add('X-WR-CALNAME', 'Football on Telly at the George and Dragon')
+cal.add('X-WR-TIMEZONE', 'America/Seattle')
+cal.add('X-WR-CALDESC', 'Football on Telly at the George and Dragon')
+
 
 for match in matchList:
 
