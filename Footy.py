@@ -7,6 +7,7 @@ from BeautifulSoup import BeautifulSoup
 from PyRSS2Gen import RSSItem, Guid
 import ScrapeNFeed
 from datetime import datetime, timedelta
+import pytz
 
 sys.path += [os.path.join(os.path.dirname(__file__), 'icalendar')]
 from icalendar import Calendar, Event
@@ -125,7 +126,8 @@ def BuildMatchList(soup):
                 hour24 += 12
                 
             dtime = datetime(year=date_tuple[0], month=date_tuple[1],
-                             day=date_tuple[2], hour=hour24, minute=minute)            
+                             day=date_tuple[2], hour=hour24, minute=minute,
+                             tzinfo=pytz.timezone('US/Pacific'))            
 
             result.append( { "date" : dtime.ctime(),
                              "datetime" : dtime,
