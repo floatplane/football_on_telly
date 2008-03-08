@@ -32,16 +32,20 @@ def ExtractTableCellText(cell):
 
     return txt
 
-timeRe = re.compile("(?P<live>live)*\s*(?P<hour>\d{1,2})([:](?P<minute>\d{1,2}))*.*(?P<ampm>am|pm)", re.IGNORECASE)
-
 # Given a string like "LIVE 11AM" returns a tuple of (hour, minute,
 # ampm, live) where hour and minute are ints, ampm is a string, and
 # live is a bool
 #
+# Can also accept "LIVE NOON" as substitute for "LIVE 12PM"
+# Can ignore idiotic typos like "LIVE 11:454AM" (Switzerland v Turkey, 6/11/08)
+#
+timeRe = re.compile("(?P<live>live)*\s*(?P<hour>(\d{1,2})|noon)([:](?P<minute>\d{1,2}))*[^amp]*(?P<ampm>am|pm)*", re.IGNORECASE)
+
 def CrackTime(time):
     re_match = timeRe.match(time)
 
     if re_match == None:
+        # print "no match ", time
         raise ValueError
 
     timeDict = re_match.groupdict()
@@ -52,9 +56,17 @@ def CrackTime(time):
     else:
         minute = int(timeDict["minute"])
 
+    # convert "noon" to 12
+    if str(timeDict["hour"]).lower() == "noon":
+        hour = 12
+        ampm = "pm"
+    else:
+        hour = int(timeDict["hour"])
+        ampm = timeDict["ampm"]
+
     live = (timeDict["live"] != None)
 
-    return (int(timeDict["hour"]), minute, timeDict["ampm"], live)
+    return (hour, minute, ampm, live)
 
 # Given a string like "MON MAR 3", return a tuple of (year, month, day)
 def CrackDate(date):
@@ -109,6 +121,7 @@ def BuildMatchList(soup):
             except ValueError:
                 # doesn't have a valid date, is probably another
                 # header row, like the Euro 2008 section
+                print "Bad date: date: %s misc: %s match: %s times: %s" % (date, misc, match, times)
                 continue
 
             lastDate = date_tuple
@@ -118,13 +131,16 @@ def BuildMatchList(soup):
             try:
                 hour, minute, ampm, live = CrackTime(t)
             except ValueError:
+                print "skipping ", t
                 continue
+
+            # print CrackTime(t)
 
             # Get our final date and time...
             hour24 = hour
-            if ampm.lower() == "pm":
+            if ampm.lower() == "pm" and hour24 < 12:
                 hour24 += 12
-                
+
             dtime = datetime(year=date_tuple[0], month=date_tuple[1],
                              day=date_tuple[2], hour=hour24, minute=minute,
                              tzinfo=pytz.timezone('US/Pacific'))            
@@ -142,6 +158,7 @@ def BuildMatchList(soup):
     return result
 
 matchList = BuildMatchList(BeautifulSoup(urllib.urlopen('http://www.georgeanddragonpub.com/football.html').read()))
+# matchList = BuildMatchList(BeautifulSoup(open('football.html').read()))
 
 cal = Calendar()
 cal.add('prodid', '-//calendar parsing//floatplane.us//')
