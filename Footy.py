@@ -107,31 +107,49 @@ def BuildMatchList(soup):
 
 
     # loop over all rows, but skip the first; that's the header row
+    stickyPrefix = ""
+    
     for row in table.findAll('tr')[1:]:
 
         date, misc, match, times = [ExtractTableCellText(cell) for cell in row.findAll('td')]
 
         times = times.split("&amp;")
 
+        prefix = ""
+
         if len(date) == 0:
             date_tuple = lastDate
         else:
             try:
                 date_tuple = CrackDate(date)
+                lastDate = date_tuple
             except ValueError:
                 # doesn't have a valid date, is probably another
                 # header row, like the Euro 2008 section
-                print "Bad date: date: %s misc: %s match: %s times: %s" % (date, misc, match, times)
-                continue
+                date_tuple = lastDate
+                if date == "RUGBY":
+                    # print "rugby"
+                    prefix = "%s: " % (date)
+                elif match == "EURO 2008":
+                    # print "euro 2008 header line"
+                    stickyPrefix = "%s: " % (match)
+                else:
+                    print "Bad date: date: %s misc: %s match: %s times: %s" % (date, misc, match, times)
+                    continue
 
-            lastDate = date_tuple
 
+        newPrefix = "%s %s" % (stickyPrefix, prefix)
+        prefix = newPrefix.strip()
+        if len(prefix) > 0:
+            match = prefix + " " + match
+            # print "New prefix: %s" % (prefix)
+        
         for t in times:
 
             try:
                 hour, minute, ampm, live = CrackTime(t)
             except ValueError:
-                print "skipping ", t
+                print "bad time: ", t
                 continue
 
             # print CrackTime(t)
@@ -142,8 +160,9 @@ def BuildMatchList(soup):
                 hour24 += 12
 
             dtime = datetime(year=date_tuple[0], month=date_tuple[1],
-                             day=date_tuple[2], hour=hour24, minute=minute,
-                             tzinfo=pytz.timezone('US/Pacific'))            
+                             day=date_tuple[2], hour=hour24, minute=minute)
+
+            dtime = pytz.timezone('US/Pacific').localize(dtime)
 
             result.append( { "date" : dtime.ctime(),
                              "datetime" : dtime,
