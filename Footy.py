@@ -149,7 +149,14 @@ def BuildMatchList(soup):
             try:
                 hour, minute, ampm, live = CrackTime(t)
             except ValueError:
-                print "bad time: ", t
+
+                # TBA is a common invalid time, so let's not log that.
+                # Also, the EURO 2008 header line has "TIMES" here, so
+                # let's not log that either.  Cuts down on noise
+
+                if -1 == t.find("TBA") and -1 == t.find("TIMES"):
+                    print "bad time: ", t
+
                 continue
 
             # print CrackTime(t)
