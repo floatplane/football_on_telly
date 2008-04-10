@@ -161,6 +161,12 @@ def BuildMatchList(soup):
 
             # print CrackTime(t)
 
+            # If we don't get an am/pm match, assume pm.  You get this
+            # when they forget to type a letter, as in "6M"
+            #
+            if ampm == None:
+                ampm = "pm"
+
             # Get our final date and time...
             hour24 = hour
             if ampm.lower() == "pm" and hour24 < 12:
