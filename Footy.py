@@ -76,12 +76,22 @@ def CrackDate(date):
 
     now = datetime.now()
 
-    month = 1
-    for m in ["jan", "feb", "mar", "apr", "may", "jun", "jul", "aug", "sep", "oct", "nov", "dec"]:
-        if monthStr.startswith(m):
-            break
-        month += 1;
+    monthDict = { "jan" : 1,
+                  "feb" : 2,
+                  "mar" : 3,
+                  "apr" : 4,
+                  "arp" : 4, # god bless dyslexia
+                  "may" : 5,
+                  "jun" : 6,
+                  "jul" : 7,
+                  "aug" : 8,
+                  "sep" : 9,
+                  "oct" : 10,
+                  "nov" : 11,
+                  "dec" : 12 }
 
+    month = monthDict[monthStr[0:3]]
+    
     year = now.year
     if (month < now.month):
         year += 1
@@ -112,6 +122,8 @@ def BuildMatchList(soup):
     for row in table.findAll('tr')[1:]:
 
         date, misc, match, times = [ExtractTableCellText(cell) for cell in row.findAll('td')]
+
+        # print date, misc, match, times
 
         times = times.split("&amp;")
 
@@ -159,7 +171,7 @@ def BuildMatchList(soup):
 
                 continue
 
-            # print CrackTime(t)
+            # print t, CrackTime(t)
 
             # If we don't get an am/pm match, assume pm.  You get this
             # when they forget to type a letter, as in "6M"
