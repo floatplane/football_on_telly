@@ -146,8 +146,8 @@ def BuildMatchList(soup):
                     # print "euro 2008 header line"
                     stickyPrefix = "%s: " % (match)
                 else:
-                    print "Bad date: date: %s misc: %s match: %s times: %s" % (date, misc, match, times)
-                    continue
+                    print "Possibly bad date: date: %s misc: %s match: %s times: %s" % (date, misc, match, times)
+                    prefix = "%s: " % (date)
 
 
         newPrefix = "%s %s" % (stickyPrefix, prefix)
