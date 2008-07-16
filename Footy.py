@@ -166,7 +166,13 @@ def BuildMatchList(soup):
                 # Also, the EURO 2008 header line has "TIMES" here, so
                 # let's not log that either.  Cuts down on noise
 
-                if -1 == t.find("TBA") and -1 == t.find("TIMES"):
+                t = t.strip()
+
+                if len(t) > 0                   \
+                   and -1 == t.find("TBA")      \
+                   and -1 == t.find("TAB")      \
+                   and -1 == t.find("TB A")     \
+                   and -1 == t.find("TIMES"):
                     print "bad time: ", t
 
                 continue
