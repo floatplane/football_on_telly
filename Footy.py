@@ -123,7 +123,7 @@ def BuildMatchList(soup):
 
         date, misc, match, times = [ExtractTableCellText(cell) for cell in row.findAll('td')]
 
-        # print date, misc, match, times
+        # print "Date: (%s) Misc: (%s) Match: (%s) Times:(%s)" % (date, misc, match, times)
 
         times = times.split("&amp;")
 
