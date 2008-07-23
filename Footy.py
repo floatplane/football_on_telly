@@ -30,6 +30,8 @@ def ExtractTableCellText(cell):
 
     txt = whitespace.sub(' ', txt).strip()
 
+    # print txt
+
     return txt
 
 # Given a string like "LIVE 11AM" returns a tuple of (hour, minute,
@@ -121,9 +123,9 @@ def BuildMatchList(soup):
     
     for row in table.findAll('tr')[1:]:
 
-        date, misc, match, times = [ExtractTableCellText(cell) for cell in row.findAll('td')]
+        date, match, times = [ExtractTableCellText(cell) for cell in row.findAll('td')]
 
-        # print "Date: (%s) Misc: (%s) Match: (%s) Times:(%s)" % (date, misc, match, times)
+        # print "Date: (%s) Match: (%s) Times:(%s)" % (date, match, times)
 
         times = times.split("&amp;")
 
@@ -146,7 +148,7 @@ def BuildMatchList(soup):
                     # print "euro 2008 header line"
                     stickyPrefix = "%s: " % (match)
                 else:
-                    print "Possibly bad date: date: %s misc: %s match: %s times: %s" % (date, misc, match, times)
+                    print "Possibly bad date: date: %s match: %s times: %s" % (date, match, times)
                     prefix = "%s: " % (date)
 
 
@@ -197,7 +199,6 @@ def BuildMatchList(soup):
 
             result.append( { "date" : dtime.ctime(),
                              "datetime" : dtime,
-                             "misc" : misc,
                              "match" : match,
                              "time" : t,
                              "hour" : hour,
@@ -226,9 +227,8 @@ for match in matchList:
         
 #     print """-------------------------------------------
 #     date %s
-#     misc %s
 #     match %s %s
-#     time %d:%02d %s""" % ( match["date"], match["misc"], match["match"], live,
+#     time %d:%02d %s""" % ( match["date"], match["match"], live,
 #                             match["hour"], match["minute"], match["ampm"])
 
 #     print match
