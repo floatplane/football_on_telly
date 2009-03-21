@@ -72,7 +72,11 @@ def CrackTime(time):
 
 # Given a string like "MON MAR 3", return a tuple of (year, month, day)
 def CrackDate(date):
-    day, monthStr, date = date.split()
+    match = re.match("(.*) (.*) (\d+)", date)
+    if not match or not len(match.groups()) == 3:
+        raise ValueError
+    
+    day, monthStr, date = match.groups()
     monthStr = monthStr.lower()
     date = int(date)
 
@@ -109,6 +113,9 @@ def BuildMatchList(soup):
 
     # Find the magic table with the crazy-ass background color
     table = soup.find(bgcolor="#000099")
+
+    if table == None:
+        table = soup.find(style="width: 100%; background-color: rgb(51, 102, 102);")
 
     # pull out all linebreaks, save ourselves headache later
     [br.extract() for br in table.findAll('br')]
@@ -208,8 +215,8 @@ def BuildMatchList(soup):
 
     return result
 
-matchList = BuildMatchList(BeautifulSoup(urllib.urlopen('http://www.georgeanddragonpub.com/football.html').read()))
-# matchList = BuildMatchList(BeautifulSoup(open('football.html').read()))
+# matchList = BuildMatchList(BeautifulSoup(urllib.urlopen('http://www.georgeanddragonpub.com/football.html').read()))
+matchList = BuildMatchList(BeautifulSoup(open('football.html').read()))
 
 cal = Calendar()
 cal.add('prodid', '-//calendar parsing//floatplane.us//')
