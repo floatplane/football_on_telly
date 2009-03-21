@@ -215,8 +215,8 @@ def BuildMatchList(soup):
 
     return result
 
-# matchList = BuildMatchList(BeautifulSoup(urllib.urlopen('http://www.georgeanddragonpub.com/football.html').read()))
-matchList = BuildMatchList(BeautifulSoup(open('football.html').read()))
+matchList = BuildMatchList(BeautifulSoup(urllib.urlopen('http://www.georgeanddragonpub.com/football.html').read()))
+# matchList = BuildMatchList(BeautifulSoup(open('football.html').read()))
 
 cal = Calendar()
 cal.add('prodid', '-//calendar parsing//floatplane.us//')
