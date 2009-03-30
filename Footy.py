@@ -72,7 +72,7 @@ def CrackTime(time):
 
 # Given a string like "MON MAR 3", return a tuple of (year, month, day)
 def CrackDate(date):
-    match = re.match("(.*) (.*) (\d+)", date)
+    match = re.match("([A-Za-z]*)\s+([A-Za-z]*)\s*(\d+)", date)
     if not match or not len(match.groups()) == 3:
         raise ValueError
     
