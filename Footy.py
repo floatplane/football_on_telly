@@ -12,28 +12,6 @@ import pytz
 sys.path += [os.path.join(os.path.dirname(__file__), 'icalendar')]
 from icalendar import Calendar, Event
 
-whitespace = re.compile("[\s]+|&nbsp;")
-
-#
-# Routine to pull out the text from a cell of the listing table,
-# which can in turn have all kinds of crazy nested tags generated
-# through the magic of FrontPage, or Word, or whatever it is.
-#
-def ExtractTableCellText(cell):
-    while hasattr(cell, 'contents') and len(cell) > 0:
-        cell = cell.contents[0]
-
-    try:
-        txt = cell.renderContents()
-    except AttributeError:
-        txt = str(cell)
-
-    txt = whitespace.sub(' ', txt).strip()
-
-    # print txt
-
-    return txt
-
 # Given a string like "LIVE 11AM" returns a tuple of (hour, minute,
 # ampm, live) where hour and minute are ints, ampm is a string, and
 # live is a bool
@@ -103,8 +81,6 @@ def CrackDate(date):
         year += 1
 
     return (year, month, date)
-    
-
 
 #
 # Build a list of matches that we find in the list
@@ -116,6 +92,9 @@ def BuildMatchList(soup):
 
     if table == None:
         table = soup.find(style="width: 100%; background-color: rgb(51, 102, 102);")
+
+    if table == None:
+        table = soup.find('div', id='mainContent').findNext('table')
 
     # pull out all linebreaks, save ourselves headache later
     [br.extract() for br in table.findAll('br')]
@@ -130,11 +109,24 @@ def BuildMatchList(soup):
     
     for row in table.findAll('tr')[1:]:
 
-        date, match, times = [ExtractTableCellText(cell) for cell in row.findAll('td')]
+        # print row
+        worldCupGroup = ""
+
+        try:
+            date, worldCupGroup, match, times = ["".join(cell.findAll(text=True)).strip().replace("\r\n", " ").encode('ascii', 'ignore') for cell in row.findAll('td')]
+        except:
+            try:
+                date, match, times = ["".join(cell.findAll(text=True)).strip().replace("\r\n", " ").encode('ascii', 'ignore') for cell in row.findAll('td')]
+            except:
+                print "Exception parsing row " + str(row)
+                continue
 
         # print "Date: (%s) Match: (%s) Times:(%s)" % (date, match, times)
+        worldCupGroup = worldCupGroup.strip()
+        if len(worldCupGroup) != 0:
+            match = "World Cup Group " + worldCupGroup + ": " + match
 
-        times = times.split("&amp;")
+        times = times.split("&")
 
         prefix = ""
 
@@ -215,7 +207,12 @@ def BuildMatchList(soup):
 
     return result
 
-matchList = BuildMatchList(BeautifulSoup(urllib.urlopen('http://www.georgeanddragonpub.com/football.html').read()))
+# matchList = BuildMatchList(BeautifulSoup(urllib.urlopen('http://www.georgeanddragonpub.com/football.html').read()))
+matchList = BuildMatchList(
+    BeautifulSoup(urllib.urlopen('http://www.georgeanddragonpub.com/ontelly.php').read(),
+                  convertEntities=BeautifulSoup.HTML_ENTITIES
+                  )
+    )
 # matchList = BuildMatchList(BeautifulSoup(open('football.html').read()))
 
 cal = Calendar()
@@ -251,3 +248,5 @@ if len(sys.argv) > 1:
     f = open(sys.argv[1], "wb")
     f.write(cal.as_string())
     f.close()
+else:
+    print cal.as_string()
