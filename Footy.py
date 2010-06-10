@@ -148,6 +148,7 @@ def BuildMatchList(soup):
                     stickyPrefix = "%s: " % (match)
                 else:
                     print "Possibly bad date: date: %s match: %s times: %s" % (date, match, times)
+                    print "You can safely ignore this error if \"%s\" is not a date." % (date)
                     prefix = "%s: " % (date)
 
 
